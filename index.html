@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>LISITING · 李思婷 — UI Design Portfolio</title>
+<style>
+  :root{
+    --bg:#0b0b0d;
+    --bg2:#101013;
+    --panel:#16161a;
+    --text:#f2f0ec;
+    --muted:#b8b8bf;
+    --line:rgba(255,255,255,.10);
+    --gold:#c9a96a;
+    --gold-soft:rgba(201,169,106,.16);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+    cursor:none;
+  }
+  ::selection{background:var(--gold);color:#111}
+  a{color:inherit;text-decoration:none}
+  .serif{font-family:"Times New Roman",Georgia,"Songti SC",serif}
+  .gold{color:var(--gold)}
+
+  /* ---------- custom cursor ---------- */
+  .cur-dot,.cur-ring{position:fixed;top:0;left:0;pointer-events:none;z-index:9999;border-radius:50%;
+    transform:translate(-50%,-50%);mix-blend-mode:difference}
+  .cur-dot{width:7px;height:7px;background:#fff;transition:width .18s,height .18s,opacity .2s}
+  .cur-ring{width:38px;height:38px;border:1px solid rgba(255,255,255,.55);
+    transition:width .2s,height .2s,opacity .2s,border-color .2s}
+  .cur-ring.grab{width:64px;height:64px;border-color:var(--gold);background:rgba(201,169,106,.10)}
+  .cur-ring.grabbing{width:54px;height:54px;border-color:var(--gold);background:rgba(201,169,106,.18)}
+  .cur-ring.hover{width:56px;height:56px;border-color:#fff}
+  body.cur-hidden .cur-dot,body.cur-hidden .cur-ring{opacity:0}
+  @media (hover:none){body{cursor:auto}.cur-dot,.cur-ring{display:none}}
+
+  /* ---------- nav ---------- */
+  nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;
+    justify-content:space-between;padding:20px 40px;mix-blend-mode:difference}
+  nav .brand{font-weight:700;letter-spacing:2px;font-size:14px}
+  nav .links{display:flex;gap:28px;font-size:13px;letter-spacing:1px}
+  nav .links a{opacity:.7;transition:.2s}
+  nav .links a:hover,nav .links a.active{opacity:1}
+  nav .links a::after{content:"";display:block;height:1px;background:#fff;width:0;transition:.25s;margin-top:4px}
+  nav .links a:hover::after,nav .links a.active::after{width:100%}
+  @media(max-width:760px){nav{padding:14px 18px}nav .links{display:none}}
+
+  /* ---------- hero ---------- */
+  .hero{height:100vh;display:flex;flex-direction:column;justify-content:center;padding:0 8vw;position:relative;overflow:hidden}
+  .hero .bgword{position:absolute;font-size:30vw;font-weight:800;color:rgba(255,255,255,.025);
+    top:50%;left:50%;transform:translate(-50%,-50%);white-space:nowrap;pointer-events:none;user-select:none}
+  .hero .kicker{font-size:13px;letter-spacing:5px;color:var(--gold);margin-bottom:22px;
+    opacity:0;transform:translateY(20px);animation:rise .9s .1s forwards}
+  .hero h1{font-size:clamp(42px,9vw,138px);line-height:.95;font-weight:800;letter-spacing:-2px;white-space:nowrap;
+    opacity:0;transform:translateY(30px);animation:rise .9s .25s forwards}
+  .hero h1 .thin{font-weight:300;color:var(--muted)}
+  .hero .sub{margin-top:26px;max-width:520px;font-size:16px;line-height:1.7;color:var(--muted);
+    opacity:0;transform:translateY(20px);animation:rise .9s .45s forwards}
+  .hero .meta{margin-top:34px;display:flex;gap:34px;flex-wrap:wrap;font-size:13px;color:var(--text);
+    opacity:0;transform:translateY(20px);animation:rise .9s .6s forwards}
+  .hero .meta b{display:block;color:var(--gold);font-size:11px;letter-spacing:2px;margin-bottom:6px;font-weight:600}
+  .scrollcue{position:absolute;bottom:30px;left:8vw;font-size:11px;letter-spacing:3px;color:var(--muted);
+    display:flex;align-items:center;gap:10px;opacity:0;animation:rise .9s 1s forwards}
+  .scrollcue .bar{width:1px;height:40px;background:linear-gradient(var(--gold),transparent);animation:cue 1.8s infinite}
+  @keyframes rise{to{opacity:1;transform:translateY(0)}}
+  @keyframes cue{0%,100%{transform:scaleY(.4);opacity:.4}50%{transform:scaleY(1);opacity:1}}
+
+  /* ---------- hero photo card ---------- */
+  .photo-wrap{
+    position:absolute;right:7vw;top:18vh;width:min(280px,20vw);aspect-ratio:3/4;z-index:10;
+    opacity:0;transform:translateY(40px) scale(.85);
+    animation:photoWrapIn 1s cubic-bezier(.2,.7,.2,1) 1s forwards, photoWrapFloat 5s ease-in-out 2.5s infinite;
+    transform-style:preserve-3d;
+  }
+  .photo-wrap::before{
+    content:"";position:absolute;inset:-3px;border-radius:22px;
+    background:conic-gradient(from 0deg, transparent, var(--gold), rgba(255,255,255,.9), var(--gold), transparent);
+    filter:blur(14px);opacity:.45;z-index:-1;animation:glowSpin 8s linear infinite;
+  }
+  @keyframes photoWrapIn{to{opacity:1;transform:translateY(0) scale(1)}}
+  @keyframes photoWrapFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+  @keyframes glowSpin{to{transform:rotate(360deg)}}
+  .photo-card{
+    width:100%;height:100%;border-radius:18px;overflow:hidden;position:relative;
+    transform-style:preserve-3d;
+    transform:perspective(1000px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));
+    box-shadow:0 30px 70px -20px rgba(0,0,0,.85), 0 0 0 1px rgba(255,255,255,.08);
+    transition:transform .1s;
+  }
+  .photo-card img{
+    width:100%;height:100%;object-fit:cover;
+    transform:scale(1.08) translateZ(30px);
+    transition:transform .5s cubic-bezier(.2,.7,.2,1);
+    pointer-events:none;
+  }
+  .photo-wrap:hover .photo-card img{transform:scale(1.15) translateZ(30px)}
+  .photo-card .shine{
+    position:absolute;inset:0;pointer-events:none;z-index:2;border-radius:18px;
+    background:radial-gradient(circle at var(--gx,50%) var(--gy,30%), rgba(255,255,255,.22), transparent 55%);
+    opacity:0;transition:opacity .3s;
+  }
+  .photo-wrap:hover .shine{opacity:1}
+  @media(max-width:980px){
+    .photo-wrap{right:5vw;top:20vh;width:min(220px,26vw)}
+  }
+  @media(max-width:760px){
+    .photo-wrap{position:relative;right:auto;top:auto;margin:40px auto 0;width:min(220px,60vw);display:block;animation:photoWrapIn 1s cubic-bezier(.2,.7,.2,1) 1s forwards;}
+    .hero{height:auto;min-height:100vh;padding:120px 8vw 80px}
+    .hero h1{white-space:normal}
+  }
+
+  /* ---------- section frame ---------- */
+  section{padding:120px 8vw;position:relative}
+  .sec-title{display:flex;align-items:baseline;gap:18px;margin-bottom:60px}
+  .sec-title .num{font-family:"Times New Roman",serif;font-size:15px;color:var(--gold)}
+  .sec-title h2{font-size:clamp(30px,5vw,56px);font-weight:700;letter-spacing:-1px}
+  .sec-title .en{margin-left:auto;font-size:12px;letter-spacing:4px;color:var(--muted);text-transform:uppercase}
+  .reveal{opacity:0;transform:translateY(40px);transition:opacity .9s cubic-bezier(.2,.7,.2,1),transform .9s cubic-bezier(.2,.7,.2,1)}
+  .reveal.in{opacity:1;transform:none}
+
+  /* ---------- gallery (centerpiece) ---------- */
+  .gallery-wrap{height:104vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:0;overflow:hidden;position:relative;background:
+      radial-gradient(120% 80% at 50% 40%,rgba(201,169,106,.08),transparent 60%),var(--bg)}
+  .gallery-head{text-align:center;margin-bottom:10px;z-index:5}
+  .gallery-head .kicker{font-size:12px;letter-spacing:5px;color:var(--gold)}
+  .gallery-head h2{font-size:clamp(28px,4.5vw,52px);font-weight:700;margin-top:10px;letter-spacing:-1px}
+  .stage{position:relative;width:100%;flex:1;perspective:1400px;perspective-origin:50% 42%;touch-action:pan-y}
+  .deck{position:absolute;inset:0;transform-style:preserve-3d}
+  .card{position:absolute;top:46%;left:50%;width:300px;height:430px;border-radius:14px;overflow:hidden;
+    transform-style:preserve-3d;cursor:pointer;will-change:transform;
+    box-shadow:0 30px 60px -20px rgba(0,0,0,.7);
+    transition:transform .55s cubic-bezier(.22,.61,.36,1),opacity .55s,filter .55s,box-shadow .55s}
+  .card img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
+  .card .cap{position:absolute;left:0;right:0;bottom:0;padding:18px 16px 14px;
+    background:linear-gradient(transparent,rgba(0,0,0,.82));opacity:0;transition:.4s}
+  .card .cap .t{font-size:16px;font-weight:700}
+  .card .cap .s{font-size:11px;color:var(--gold);letter-spacing:1px;margin-top:3px}
+  .card.is-front{box-shadow:0 40px 80px -20px rgba(0,0,0,.85),0 0 0 1px rgba(201,169,106,.35)}
+  .card.is-front .cap{opacity:1}
+  .card.is-front::after{content:"";position:absolute;inset:0;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+  .gallery-ctrls{display:flex;align-items:center;gap:26px;margin-top:6px;z-index:5}
+  .gallery-ctrls button{width:46px;height:46px;border-radius:50%;border:1px solid var(--line);
+    background:transparent;color:var(--text);font-size:18px;cursor:pointer;transition:.25s;display:grid;place-items:center}
+  .gallery-ctrls button:hover{background:var(--gold);color:#111;border-color:var(--gold)}
+  .dots{display:flex;gap:9px}
+  .dots i{width:7px;height:7px;border-radius:50%;background:var(--line);cursor:pointer;transition:.25s}
+  .dots i.on{background:var(--gold);width:22px;border-radius:4px}
+  .hint{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-size:11px;letter-spacing:2px;color:var(--muted);z-index:5}
+
+  /* ---------- about ---------- */
+  .about-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:70px}
+  @media(max-width:860px){.about-grid{grid-template-columns:1fr;gap:40px}}
+  .about-lead{font-size:clamp(20px,2.6vw,30px);line-height:1.5;font-weight:300}
+  .about-lead b{color:var(--gold);font-weight:600}
+  .about-body{margin-top:28px;color:var(--muted);font-size:15px;line-height:1.85}
+  .skill-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:30px}
+  .skill-row span{font-size:12px;letter-spacing:1px;padding:8px 14px;border:1px solid var(--line);border-radius:30px;color:var(--text)}
+  .timeline{margin-top:10px}
+  .tl{display:flex;gap:20px;padding:20px 0;border-bottom:1px solid var(--line)}
+  .tl .yr{font-family:"Times New Roman",serif;color:var(--gold);font-size:15px;min-width:64px}
+  .tl .tt{font-weight:600;font-size:15px}
+  .tl .td{color:var(--muted);font-size:13px;margin-top:4px;line-height:1.6}
+
+  /* ---------- contact ---------- */
+  .contact{text-align:center;padding-top:150px;padding-bottom:150px}
+  .contact h2{font-size:clamp(40px,9vw,120px);font-weight:800;letter-spacing:-2px;line-height:1}
+  .contact .mail{display:inline-block;margin-top:30px;font-size:clamp(18px,3vw,28px);border-bottom:1px solid var(--gold);padding-bottom:6px;color:var(--gold)}
+  .contact .row{margin-top:50px;display:flex;gap:50px;justify-content:center;flex-wrap:wrap;color:var(--muted);font-size:13px}
+  .contact .row b{display:block;color:var(--text);font-size:15px;margin-bottom:5px;letter-spacing:1px}
+  footer{padding:30px 8vw;color:var(--muted);font-size:12px;letter-spacing:1px;border-top:1px solid var(--line);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+
+  /* ---------- project detail overlay ---------- */
+  .detail{position:fixed;inset:0;z-index:500;background:rgba(8,8,10,.97);backdrop-filter:blur(6px);
+    opacity:0;pointer-events:none;transition:opacity .4s;display:flex;flex-direction:column}
+  .detail.open{opacity:1;pointer-events:auto}
+  .detail-top{display:flex;align-items:center;justify-content:space-between;padding:22px 6vw;border-bottom:1px solid var(--line)}
+  .detail-top .dt-title{font-size:clamp(20px,3vw,30px);font-weight:700}
+  .detail-top .dt-title small{display:block;color:var(--gold);font-size:12px;letter-spacing:2px;margin-top:5px;font-weight:500}
+  .detail-top .x{width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--text);font-size:20px;cursor:pointer;transition:.2s}
+  .detail-top .x:hover{background:var(--gold);color:#111;border-color:var(--gold)}
+  .detail-body{flex:1;display:grid;grid-template-columns:.9fr 1.1fr;overflow:hidden}
+  @media(max-width:860px){.detail-body{grid-template-columns:1fr;overflow-y:auto}}
+  .detail-info{padding:48px 5vw;overflow-y:auto}
+  .detail-info .role{color:var(--gold);font-size:12px;letter-spacing:2px;margin-bottom:18px}
+  .detail-info p{color:var(--muted);line-height:1.9;font-size:15px;margin-bottom:22px}
+  .detail-info .tags{display:flex;flex-wrap:wrap;gap:9px;margin-top:10px}
+  .detail-info .tags span{font-size:11px;letter-spacing:1px;padding:7px 13px;border:1px solid var(--line);border-radius:30px}
+  .detail-shots{background:var(--bg2);overflow-x:auto;overflow-y:hidden;display:flex;align-items:center;gap:18px;padding:40px;scroll-snap-type:x mandatory}
+  .detail-shots img{height:74%;max-height:560px;border-radius:10px;flex:0 0 auto;scroll-snap-align:center;
+    box-shadow:0 20px 50px -20px rgba(0,0,0,.8);object-fit:contain;max-width:90%}
+  .detail-nav{display:flex;justify-content:space-between;padding:18px 6vw;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+  .detail-nav button{background:transparent;border:none;color:var(--text);font-size:13px;letter-spacing:1px;cursor:pointer}
+  .detail-nav button:hover{color:var(--gold)}
+  @media(max-width:860px){.detail-shots{flex-direction:column;overflow-x:hidden;overflow-y:auto;align-items:stretch;padding:24px}
+    .detail-shots img{height:auto;width:100%;max-width:100%;max-height:none}}
+
+  /* marquee */
+  .marquee{overflow:hidden;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:18px 0;white-space:nowrap;display:flex}
+  .marquee .track{display:inline-flex;gap:50px;animation:scroll 26s linear infinite;font-family:"Times New Roman",serif;font-size:26px;color:var(--muted)}
+  .marquee .track span{padding:0 10px}
+  .marquee .track .dot{color:var(--gold)}
+  @keyframes scroll{to{transform:translateX(-50%)}}
+</style>
+</head>
+<body>
+
+<div class="cur-dot"></div>
+<div class="cur-ring"></div>
+
+<nav>
+  <div class="brand">LISITING ©</div>
+  <div class="links">
+    <a href="#hero">首页</a>
+    <a href="#works">作品</a>
+    <a href="#about">关于</a>
+    <a href="#contact">联系</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero" id="hero">
+  <div class="bgword serif">PORTFOLIO</div>
+  <div class="kicker">USER INTERFACE DESIGN · 2026</div>
+  <h1 class="serif">李思婷<span class="thin"> / LISITING</span></h1>
+  <p class="sub">5 年 UI 设计经验，专注跨境电商、本地生活、租房与社交产品的全链路体验设计。相信好的界面是「被需要」而非「被看见」。</p>
+  <div class="meta">
+    <div><b>EXPERIENCE</b>5 年 · UI / 交互</div>
+    <div><b>FIELDS</b>跨境电商 · 本地生活 · 租房 · 社交</div>
+    <div><b>BASE</b>重庆 · 远程协作</div>
+  </div>
+  <div class="photo-wrap" id="photoWrap">
+    <div class="photo-card" id="photoCard">
+      <img src="assets/photo.jpg" alt="李思婷">
+      <div class="shine"></div>
+    </div>
+  </div>
+  <div class="scrollcue"><span class="bar"></span>向下滚动 / SCROLL</div>
+</header>
+
+<!-- WORKS / GALLERY -->
+<section class="gallery-wrap" id="works">
+  <div class="gallery-head">
+    <div class="kicker">SELECTED WORKS</div>
+    <h2 class="serif">交互作品集</h2>
+  </div>
+  <div class="stage" id="stage">
+    <div class="deck" id="deck"></div>
+  </div>
+  <div class="gallery-ctrls">
+    <button id="prev" aria-label="上一个">‹</button>
+    <div class="dots" id="dots"></div>
+    <button id="next" aria-label="下一个">›</button>
+  </div>
+  <div class="hint">拖拽旋转 · 点击中央查看项目 →</div>
+</section>
+
+<div class="marquee">
+  <div class="track" id="mq">
+    <span>跨境电商</span><span class="dot">✦</span><span>本地生活</span><span class="dot">✦</span><span>租房体验</span><span class="dot">✦</span><span>社交产品</span><span class="dot">✦</span><span>AIGC 运营</span><span class="dot">✦</span><span>NFT 社区</span><span class="dot">✦</span><span>游戏分发</span><span class="dot">✦</span><span>虚拟 IP</span><span class="dot">✦</span>
+  </div>
+</div>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="sec-title">
+    <span class="num">01</span><h2 class="serif">关于我</h2><span class="en">About</span>
+  </div>
+  <div class="about-grid reveal">
+    <div>
+      <p class="about-lead">我是 <b>李思婷</b>，一名以结果为导向的 UI / 交互设计师。擅长从业务目标反推体验路径，把复杂的交易与社区流程，收敛成清晰、克制、可落地的界面。</p>
+      <p class="about-body">过去 5 年，我服务过跨境电商（Mulebuy）、本地生活、房产租房（大房鸭）与游戏社区等多类目产品，覆盖 App、Web 后台与运营工具。熟悉从用户研究、信息架构、视觉规范到设计交付的完整链路，也能与产品、研发高效协作推进落地。</p>
+      <div class="skill-row">
+        <span>UI 设计</span><span>交互设计</span><span>用户研究</span><span>设计系统</span>
+        <span>Figma</span><span>Prototyping</span><span>数据驱动</span><span>跨境电商</span>
+        <span>本地生活</span><span>社区运营</span>
+      </div>
+    </div>
+    <div>
+      <div class="timeline">
+        <div class="tl"><div class="yr">2021—</div><div><div class="tt">跨境电商 · UI 设计</div><div class="td">Mulebuy 买手/商家全链路体验，覆盖 App 与 Web 后台体系。</div></div></div>
+        <div class="tl"><div class="yr">2020</div><div><div class="tt">本地生活 / 租房</div><div class="td">大房鸭去中介化交易体验，重构看房到签约流程。</div></div></div>
+        <div class="tl"><div class="yr">2019</div><div><div class="tt">社交 / 游戏 / NFT</div><div class="td">游戏盒子分发、NFT 虹域社区与 Mumu 虚拟 IP 形象设计。</div></div></div>
+        <div class="tl"><div class="yr">EDU</div><div><div class="tt">重庆艺术工程职业学院</div><div class="td">视觉与数字媒体方向，奠定扎实的排版与审美基础。</div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section class="contact" id="contact">
+  <div class="sec-title" style="justify-content:center"><span class="num">02</span><h2 class="serif" style="font-size:clamp(22px,3vw,34px)">一起做点好东西</h2></div>
+  <h2 class="serif reveal">Let's<br>Work Together</h2>
+  <a class="mail reveal" href="mailto:13167935293@163.com">13167935293@163.com</a>
+  <div class="row reveal">
+    <div><b>PHONE</b>131 6793 5293</div>
+    <div><b>EMAIL</b>13167935293@163.com</div>
+    <div><b>LOCATION</b>重庆 · 远程</div>
+    <div><b>STATUS</b>开放合作中</div>
+  </div>
+</section>
+
+<footer>
+  <div>© 2026 李思婷 LISITING · UI Design Portfolio</div>
+  <div>Designed with care · 重庆</div>
+</footer>
+
+<!-- PROJECT DETAIL -->
+<div class="detail" id="detail">
+  <div class="detail-top">
+    <div class="dt-title" id="dtTitle">—<small id="dtEn">—</small></div>
+    <button class="x" id="dtClose">✕</button>
+  </div>
+  <div class="detail-body">
+    <div class="detail-info" id="dtInfo"></div>
+    <div class="detail-shots" id="dtShots"></div>
+  </div>
+  <div class="detail-nav">
+    <button id="dtPrev">← 上一个项目</button>
+    <button id="dtNext">下一个项目 →</button>
+  </div>
+</div>
+
+<script>
+/* ============== 项目数据 ============== */
+const PROJECTS = [
+  { id:"mulebuy-app", cover:"assets/covers/mulebuy-app.jpg", title:"Mulebuy 跨境电商", en:"Cross-border E-commerce APP",
+    role:"UI / 交互设计 · 全链路",
+    desc:"面向海外买手的跨境电商 App，覆盖首页推荐、商品详情、加购结算、联盟分销、消息与会员中心。重做用户增长与交易体验，通过清晰的层级与轻量动效降低决策成本，提升转化与复购。",
+    tags:["用户研究","信息架构","视觉规范","交易转化","会员体系"],
+    shots:["04","05","07","09","12","15","18","21"].map(n=>`assets/projects/mulebuy-app/${n}.jpg`) },
+
+  { id:"dafangya", cover:"assets/covers/dafangya.jpg", title:"大房鸭租房", en:"Dafangya Rental",
+    role:"UI / 交互设计",
+    desc:"去中介化的房产交易平台，重构从看房、咨询、签约到售后的完整闭环。以信任与效率为核心，弱化销售感，用克制的界面承载复杂的房产信息。",
+    tags:["交易流程","信任设计","本地生活","信息降噪"],
+    shots:["23","25","28","32","36"].map(n=>`assets/projects/dafangya/${n}.jpg`) },
+
+  { id:"mulebuy-web", cover:"assets/covers/mulebuy-web.jpg", title:"Mulebuy 跨境电商 Web", en:"Cross-border Web Console",
+    role:"UI / 设计系统",
+    desc:"面向买手与商家的 Web 后台体系，包含数据看板、订单管理、选品与分销工具。建立统一的后台设计语言，让高密度信息依旧清晰可读、操作高效。",
+    tags:["后台体系","设计系统","数据看板","B 端"],
+    shots:["55","56","58","60"].map(n=>`assets/projects/mulebuy-web/${n}.jpg`) },
+
+  { id:"aigc", cover:"assets/covers/aigc.jpg", title:"AIGC 运营平台", en:"AIGC Operations",
+    role:"UI / 交互设计",
+    desc:"面向内容生产的 AIGC 运营工具，将 prompt、生成、编辑与分发串联成流畅工作流，降低创作门槛，让运营与设计师高效产出。",
+    tags:["AIGC","工作流","内容生产","运营工具"],
+    shots:["66","67","68"].map(n=>`assets/projects/aigc/${n}.jpg`) },
+
+  { id:"nft", cover:"assets/covers/nft.jpg", title:"NFT 虹域", en:"Hongyu NFT Community",
+    role:"UI / 交互设计",
+    desc:"数字藏品社区与交易平台，强调收藏的仪式感与社区的归属感。围绕发行、展示、交易与社群构建沉浸式的视觉与交互体验。",
+    tags:["NFT","社区","数字藏品","Web3"],
+    shots:["37","38","40","43","45"].map(n=>`assets/projects/nft/${n}.jpg`) },
+
+  { id:"gamebox", cover:"assets/covers/gamebox.jpg", title:"游戏盒子", en:"Game Box",
+    role:"UI / 交互设计",
+    desc:"游戏分发与玩家社区产品，聚合下载、攻略、社交与活动。以强辨识度的视觉与顺畅的导航，提升玩家从发现到留存的全流程体验。",
+    tags:["游戏分发","社区","活动运营","玩家留存"],
+    shots:["47","49","51","53"].map(n=>`assets/projects/gamebox/${n}.jpg`) },
+
+  { id:"mumu-ip", cover:"assets/covers/mumu-ip.jpg", title:"Mumu 虚拟 IP", en:"Mumu Virtual IP",
+    role:"IP 形象 / UI 设计",
+    desc:"原创虚拟形象 IP 的视觉与体验设计，从角色设定延展到表情、贴纸与社区场景，赋予品牌一致的性格与记忆点。",
+    tags:["虚拟 IP","形象设计","品牌延展","社区"],
+    shots:["61","62","63","64","65"].map(n=>`assets/projects/mumu-ip/${n}.jpg`) },
+];
+
+/* ============== 自定义光标 ============== */
+const dot=document.querySelector('.cur-dot'), ring=document.querySelector('.cur-ring');
+let mx=innerWidth/2,my=innerHeight/2,rx=mx,ry=my;
+addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;dot.style.transform=`translate(${mx}px,${my}px) translate(-50%,-50%)`;});
+function ringLoop(){rx+=(mx-rx)*.18;ry+=(my-ry)*.18;ring.style.transform=`translate(${rx}px,${ry}px) translate(-50%,-50%)`;requestAnimationFrame(ringLoop);}
+ringLoop();
+const hoverEls=()=>document.querySelectorAll('a,button,.card,.dots i,.skill-row span,.marquee,.photo-wrap');
+document.addEventListener('mouseover',e=>{if(e.target.closest('a,button,.dots i,.skill-row span,.photo-wrap'))ring.classList.add('hover');});
+document.addEventListener('mouseout',e=>{if(e.target.closest('a,button,.dots i,.skill-row span,.photo-wrap'))ring.classList.remove('hover');});
+
+/* ============== hero photo tilt + shine ============== */
+const photoWrap=document.getElementById('photoWrap'), photoCard=document.getElementById('photoCard');
+if(photoWrap && photoCard){
+  photoWrap.addEventListener('mousemove',e=>{
+    const r=photoCard.getBoundingClientRect();
+    const x=e.clientX-r.left, y=e.clientY-r.top;
+    const cx=r.width/2, cy=r.height/2;
+    const dx=(x-cx)/cx, dy=(y-cy)/cy;
+    photoCard.style.setProperty('--rx', `${-dy*10}deg`);
+    photoCard.style.setProperty('--ry', `${dx*10}deg`);
+    photoCard.style.setProperty('--gx', `${Math.max(10,Math.min(90,x/r.width*100))}%`);
+    photoCard.style.setProperty('--gy', `${Math.max(10,Math.min(90,y/r.height*100))}%`);
+  });
+  photoWrap.addEventListener('mouseleave',()=>{
+    photoCard.style.setProperty('--rx','0deg');
+    photoCard.style.setProperty('--ry','0deg');
+    photoCard.style.setProperty('--gx','50%');
+    photoCard.style.setProperty('--gy','30%');
+  });
+}
+
+/* ============== 3D 弧形画廊 ============== */
+const deck=document.getElementById('deck');
+const dotsBox=document.getElementById('dots');
+let pos=0;                       // 当前中心（可为小数，支持拖拽）
+const N=PROJECTS.length;
+const cards=[];
+PROJECTS.forEach((p,i)=>{
+  const c=document.createElement('div');
+  c.className='card';
+  c.innerHTML=`<img src="${p.cover}" alt="${p.title}" loading="eager"><div class="cap"><div class="t">${p.title}</div><div class="s">${p.en}</div></div>`;
+  c.dataset.i=i;
+  deck.appendChild(c);
+  cards.push(c);
+  // 圆点
+  const d=document.createElement('i');
+  d.dataset.i=i; dotsBox.appendChild(d);
+  d.addEventListener('click',()=>goTo(i));
+  // 点击卡片
+  c.addEventListener('click',()=>{
+    if(Math.abs(shortDist(i,pos))<0.5) openDetail(i);   // 点中央 → 详情
+    else goTo(i);                                       // 点两侧 → 转到该卡
+  });
+});
+const dotEls=[...dotsBox.children];
+
+function shortDist(i,p){let d=((i-p)%N+N)%N;if(d>N/2)d-=N;return d;}
+
+let R=480;
+function computeR(){R=Math.max(300,Math.min(480, innerWidth*0.52));}
+function layout(){
+  computeR();
+  cards.forEach((c,i)=>{
+    const d=shortDist(i,pos);
+    const ad=Math.abs(d);
+    if(ad>3.6){c.style.opacity=0;c.style.pointerEvents='none';c.style.display='none';return;}
+    c.style.display='block';c.style.pointerEvents='auto';
+    const ang=d*26*Math.PI/180;
+    const x=R*Math.sin(ang);
+    const z=R*Math.cos(ang)-R;
+    const scale=1-ad*0.07;
+    const op=Math.max(0.12,1-ad*0.22);
+    c.style.transform=`translate(-50%,-50%) translateX(${x}px) translateZ(${z}px) rotateY(${-d*26}deg) scale(${scale})`;
+    c.style.opacity=op;
+    c.style.zIndex=100-Math.round(ad);
+    c.style.filter=`brightness(${1-ad*0.12})`;
+    c.classList.toggle('is-front',ad<0.5);
+  });
+  dotEls.forEach((d,i)=>d.classList.toggle('on',i===((Math.round(pos)%N)+N)%N));
+}
+function goTo(i){ // 选最近的等价位置，避免长距离回绕
+  const cur=((Math.round(pos)%N)+N)%N;
+  let diff=i-cur; if(diff>N/2)diff-=N; if(diff<-N/2)diff+=N;
+  pos=Math.round(pos)+diff; layout();
+}
+document.getElementById('prev').onclick=()=>{pos=Math.round(pos)-1;layout();};
+document.getElementById('next').onclick=()=>{pos=Math.round(pos)+1;layout();};
+
+/* 拖拽 */
+let dragging=false,startX=0,startPos=0,moved=0;
+const stage=document.getElementById('stage');
+stage.addEventListener('pointerdown',e=>{dragging=true;startX=e.clientX;startPos=pos;moved=0;ring.classList.add('grabbing');stage.setPointerCapture(e.pointerId);});
+stage.addEventListener('pointermove',e=>{if(!dragging)return;const dx=e.clientX-startX;moved=Math.abs(dx);pos=startPos-dx/170;layout();});
+function endDrag(){if(!dragging)return;dragging=false;ring.classList.remove('grabbing');pos=Math.round(pos);layout();}
+stage.addEventListener('pointerup',endDrag);
+stage.addEventListener('pointercancel',endDrag);
+stage.addEventListener('pointerleave',endDrag);
+// 悬停画廊时光标变抓手
+stage.addEventListener('mouseenter',()=>ring.classList.add('grab'));
+stage.addEventListener('mouseleave',()=>{if(!dragging)ring.classList.remove('grab');});
+
+addEventListener('resize',layout);
+layout();
+
+/* ============== 项目详情 ============== */
+const detail=document.getElementById('detail');
+const dtTitle=document.getElementById('dtTitle'),dtEn=document.getElementById('dtEn');
+const dtInfo=document.getElementById('dtInfo'),dtShots=document.getElementById('dtShots');
+let curDetail=0;
+function openDetail(i){
+  curDetail=i; const p=PROJECTS[i];
+  dtTitle.childNodes[0].nodeValue=p.title; dtEn.textContent=p.en;
+  dtInfo.innerHTML=`<div class="role">${p.role}</div><p>${p.desc}</p>
+    <div class="tags">${p.tags.map(t=>`<span>${t}</span>`).join('')}</div>`;
+  dtShots.innerHTML=p.shots.map(s=>`<img src="${s}" alt="${p.title}" loading="lazy">`).join('');
+  detail.classList.add('open'); document.body.style.overflow='hidden';
+  ring.classList.remove('grab');
+}
+function closeDetail(){detail.classList.remove('open');document.body.style.overflow='';}
+document.getElementById('dtClose').onclick=closeDetail;
+detail.addEventListener('click',e=>{if(e.target===detail)closeDetail();});
+document.getElementById('dtPrev').onclick=()=>openDetail((curDetail-1+N)%N);
+document.getElementById('dtNext').onclick=()=>openDetail((curDetail+1)%N);
+addEventListener('keydown',e=>{if(e.key==='Escape')closeDetail();
+  if(detail.classList.contains('open')){if(e.key==='ArrowLeft')openDetail((curDetail-1+N)%N);if(e.key==='ArrowRight')openDetail((curDetail+1)%N);}
+  else{if(e.key==='ArrowLeft'){pos=Math.round(pos)-1;layout();}if(e.key==='ArrowRight'){pos=Math.round(pos)+1;layout();}}});
+
+/* ============== 滚动揭示 + 导航高亮 ============== */
+const io=new IntersectionObserver(es=>es.forEach(en=>{if(en.isIntersecting)en.target.classList.add('in');}),{threshold:.15});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+const navLinks=[...document.querySelectorAll('nav .links a')];
+const secs=['hero','works','about','contact'].map(id=>document.getElementById(id));
+addEventListener('scroll',()=>{
+  const y=scrollY+innerHeight/2;
+  let cur=secs[0].id;
+  secs.forEach(s=>{if(s.offsetTop<=y)cur=s.id;});
+  navLinks.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+cur));
+});
+// 自动轮播（空闲时）
+let autoTimer=setInterval(()=>{if(!dragging&&!detail.classList.contains('open')){pos=Math.round(pos)+1;layout();}},4200);
+stage.addEventListener('pointerdown',()=>clearInterval(autoTimer));
+
+/* 跑马灯复制一份用于无缝滚动 */
+const mq=document.getElementById('mq'); mq.innerHTML+=mq.innerHTML;
+</script>
+</body>
+</html>
